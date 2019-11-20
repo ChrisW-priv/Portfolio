@@ -11,8 +11,8 @@ Dla wzoru funkcji:
 > a(x-p)^2 +q dla kanonicznej
 Dla punktów:
 > (x1,0) lub os= Xo
- (x2,0)
- (x3,y)
+  (x2,0)
+  (x3,y)
 Jeśli wpisujesz punkty proszę zwróć uwagę na to by pkt. pierwszy i drugi to były miejsca zerowe.
 Ew. jeśli nie masz podanych 2 pkt. zerowych tylko oś symetrii, oś symetrii wpisz na pierwszej pozycji
 
