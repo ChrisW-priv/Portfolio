@@ -2,8 +2,8 @@ print("""
 Najpierw podaj czy program ma liczyć funkcję dla punktów czy wzoru funkcji
 Dla punktów wpisz:  "Points"
 Dla wzoru funkcji:
-> głównej          "Main"
-> kanonicznej      "Canonic"
+> głównej           "Main"
+> kanonicznej       "Canonic"
 
 Następnie wpisz te wartości
 Dla wzoru funkcji:
