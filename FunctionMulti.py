@@ -1,9 +1,9 @@
 print("""
 Najpierw podaj czy program ma liczyć funkcję dla punktów czy wzoru funkcji
-Dla punktów wpisz:  "Points"
+Dla punktów wpisz:\t"Points"
 Dla wzoru funkcji:
-> głównej           "Main"
-> kanonicznej       "Canonic"
+> Głównej\t\t\t"Main"
+> Kanonicznej\t\t"Canonic"
 
 Następnie wpisz te wartości
 Dla wzoru funkcji:
@@ -30,8 +30,8 @@ try:
                 self.a = a
                 self.b = b
                 self.c = c
-                self.delta = self.b * self.b - 4 * self.a * self.c
-                self.p = -self.b / (2 * self.a)
+                self.delta = self.b**2 - 4*self.a*self.c
+                self.p = -self.b / (2*self.a)
                 self.q = -self.delta / (4 * self.a)
                 self.w = f"({self.p}, {self.q})"
                 self.os = f"x = {self.p}"
@@ -113,7 +113,6 @@ try:
                         f"a = {self.a}    x1 = {self.x1}    x2 = {self.x2}"
 
         intake = ""
-
         A = 0
         B = 0
         C = 0
@@ -133,7 +132,7 @@ try:
             pos_x = intake.find("x ")
 
             A = float(intake[:pos_x2])
-            B = float(intake[intake.find("x^2") + 3: pos_x])
+            B = float(intake[pos_x2 + 3: pos_x])
             C = float(intake[pos_x + 1:])
         elif what_f == "Canonic":
             pos_x = intake.find("x")
@@ -205,7 +204,7 @@ Liczba miejsc zerowych = {func.m0()}
 Miejsce(miejsca) zerowe = 
 {func.x0()}
 ''')
-except ValueError and ZeroDivisionError and TypeError and NameError and SyntaxError:
+except ValueError or ZeroDivisionError or TypeError or NameError or SyntaxError:
     print("""
 No i nie napisałeś/łaś tak jak prosiłem!
 Teraz włącz program jeszcze raz i zrób wszystko jeszcze raz
