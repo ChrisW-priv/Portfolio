@@ -19,4 +19,4 @@ while True:
                 new += chr(shifted)
             print("Your txt decrypted is " + new)
             break
-    new = ""
+
