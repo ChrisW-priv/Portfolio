@@ -7,8 +7,7 @@ board = [
     [9,0,4,0,6,0,0,0,5],
     [0,7,0,3,0,0,0,1,2],
     [1,2,0,0,0,7,4,0,0],
-    [0,4,9,2,0,6,0,0,7]
-]
+    [0,4,9,2,0,6,0,0,7]]
 
 class Sudoku:
 	def __init__(self, board):
@@ -19,11 +18,9 @@ class Sudoku:
 	    for i in range(len(self.board)):
 	        if i % 3 == 0 and i != 0:
 	            str_grid += ("- - - - - - - - - - - - \n")
-
 	        for j in range(len(self.board[0])):
 	            if j % 3 == 0 and j != 0:
 	                str_grid += (" | ")
-
 	            if j == 8:
 	                str_grid += str((self.board[i][j])) + '\n'
 	            else:
@@ -36,14 +33,11 @@ class Sudoku:
 	        return True
 	    else:
 	        row, col = pos_found
-
 	    for i in range(1,10):
 	        if self.valid(i, (row, col)):
 	            self.board[row][col] = i
-
 	            if self.solve():
 	                return True
-
 	            self.board[row][col] = 0
 
 	def valid(self, num, pos):
@@ -69,13 +63,13 @@ class Sudoku:
 	    return True
 
 	def find_next_empty_pos(self):
-	    for i in range(len(self.board)):
-	        for j in range(len(self.board[0])):
-	            if self.board[i][j] == 0:
-	                return (i, j)  # row, col
-	    return None
+	    for r in range(len(self.board)):
+	        for c in range(len(self.board[0])):
+	            if self.board[r][c] == 0:
+	                return (r, c)  # row, column
 
 
-sudoku = Sudoku(board)
-sudoku.solve()
-print(sudoku)
+if __name__ == "__main__":
+	sudoku = Sudoku(board)
+	sudoku.solve()
+	print(sudoku)
