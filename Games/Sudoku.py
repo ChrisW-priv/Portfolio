@@ -18,24 +18,24 @@ class Sudoku:
 	    str_grid = ""
 	    for i in range(len(self.board)):
 	        if i % 3 == 0 and i != 0:
-	            str_grid += ("- - - - - - - - - - - - ")
+	            str_grid += ("- - - - - - - - - - - - \n")
 
 	        for j in range(len(self.board[0])):
 	            if j % 3 == 0 and j != 0:
 	                str_grid += (" | ")
 
 	            if j == 8:
-	                str_grid += str((self.board[i][j]))
+	                str_grid += str((self.board[i][j])) + '\n'
 	            else:
 	                str_grid += (str(self.board[i][j]) + " ")
 	    return str_grid
 
 	def solve(self):
-	    find = self.find_empty()
-	    if not find:
+	    pos_found = self.find_next_empty_pos()
+	    if not pos_found:
 	        return True
 	    else:
-	        row, col = find
+	        row, col = pos_found
 
 	    for i in range(1,10):
 	        if self.valid(i, (row, col)):
@@ -46,35 +46,35 @@ class Sudoku:
 
 	            self.board[row][col] = 0
 
-	    return False
-
-
 	def valid(self, num, pos):
 	    # Check row
 	    for i in range(len(self.board[0])):
 	        if self.board[pos[0]][i] == num and pos[1] != i:
 	            return False
-	    # Check column
+	   
+	     # Check column
 	    for i in range(len(self.board)):
 	        if self.board[i][pos[1]] == num and pos[0] != i:
 	            return False
-	    # Check box
+	   
+	     # Check box
 	    box_x = pos[1] // 3
 	    box_y = pos[0] // 3
-
 	    for i in range(box_y*3, box_y*3 + 3):
 	        for j in range(box_x * 3, box_x*3 + 3):
 	            if self.board[i][j] == num and (i,j) != pos:
 	                return False
-	    # default
+	   
+	     # default
 	    return True
 
-	def find_empty(self):
+	def find_next_empty_pos(self):
 	    for i in range(len(self.board)):
 	        for j in range(len(self.board[0])):
 	            if self.board[i][j] == 0:
 	                return (i, j)  # row, col
 	    return None
+
 
 sudoku = Sudoku(board)
 sudoku.solve()
