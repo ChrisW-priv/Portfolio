@@ -9,7 +9,7 @@ board = [
     [1,2,0,0,0,7,4,0,0],
     [0,4,9,2,0,6,0,0,7]]
 
-class Sudoku:
+class SudokuSolver:
 	def __init__(self, board):
 		self.board = board
 	
@@ -70,6 +70,6 @@ class Sudoku:
 
 
 if __name__ == "__main__":
-	sudoku = Sudoku(board)
+	sudoku = SudokuSolver(board)
 	sudoku.solve()
 	print(sudoku)

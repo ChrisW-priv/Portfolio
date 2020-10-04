@@ -1,0 +1,5 @@
+.ui => .py
+controller needs to be finished
+logic of creating new levels
+game over + "You won" screens
+make it possible to unflag points
