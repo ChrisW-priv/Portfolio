@@ -1,25 +1,27 @@
 import os
 import numpy as np
+import pygame
+
 
 class FourInLine:
-    def __init__(self):
-        self.board = np.ndarray(shape=(6,7), dtype=str)
+    def __init__(self, size=20):
+        self.board = np.empty(shape=(6,7), dtype=str)
+        self.moves=[]
 
-    def __repr__(self):
-        str_grid = "1   2   3   4   5   6   7 \n-   -   -   -   -   -   -\n"
-        for i in range(len(self.board)):
-            if i % 1 == 0 and i != 0:
-                str_grid += ("- - - - - - - - - - - - -\n")
-            for j in range(len(self.board[0])):
-                if j % 1 == 0 and j != 0:
-                    str_grid += (" | ")
-                if self.board[i][j] == '':
-                    str_grid+=' '
-                if j == 6:
-                    str_grid += str((self.board[i][j])) + '\n'
-                else:
-                    str_grid += (str(self.board[i][j]) + "")
-        return str_grid
+        self.shape = self.board.shape[::-1]
+        self.blockSize = size
+        self.BLACK = (0, 0, 0)
+        self.WHITE = (200, 200, 200)
+
+        self.init_screen()
+
+    def init_screen(self):
+        pygame.init()
+        self.font = pygame.font.SysFont('Arial', 18)
+        pygame.display.set_caption('Box Test')
+        self.screen = pygame.display.set_mode( (self.shape[0]*self.blockSize, self.shape[1]*self.blockSize) )
+        self.screen.fill(self.WHITE)
+        pygame.display.update()
 
     def check_lines(self):
         b = self.board # makes writing code bit more easies
@@ -43,13 +45,12 @@ class FourInLine:
 
     def highest(self):
         highest = []
-        for column in range( self.board.shape[1] ):
-            for i, row in enumerate(self.board):
-                if row[column] != '':
-                    highest.append(i);break
-                if i == self.board.shape[0]-1:
-                    highest.append(5);break
-        print(highest)
+        for column in range(len( self.board[0] )):
+            for row in range( len(self.board) ):
+                if self.board[len( self.board )-row-1][column] == "":
+                    highest.append(row);break
+                if row == 5:
+                    highest.append(row+1);break
         return highest
 
     def move(self, move, player):
@@ -58,49 +59,95 @@ class FourInLine:
         if highest[move] == self.board.shape[0]:
             raise MoveNotValidError('This column is full, choose other one\n')
         else:
-            print('x,y', len( self.board )-highest[move]-1, move)
-            self.board[self.board.shape[0]-highest[move]-1][move] = player
+            x=self.board.shape[0]-highest[move]-1
+            y=move
+            self.board[x][y] = player
+            self.moves.append( (x,y) )
 
     def play(self):
-        os.system('cls')
-        print(self)
+        self.drawGrid()
 
         while True:
             for player in ['X','O']:
                 move_ok=False
                 while not move_ok:
-                    
-                    move = input(f'What is ur move? ({player})\n > ')
-                    try:
-                        assert int(move) in range(1,7+1)
-                        self.move( int(move)-1, player )
-                    
-                    except MoveNotValidError as e:
-                        print(e)
-                    except ValueError:
-                        print('This is not a number from 1 to 7!')
-                    except AssertionError:
-                        print('not in range 1-7')
-                    
-                    else:
-                        # os.system('cls')
-                        print(self.board)
-                        move_ok=True
-                
+                    for event in pygame.event.get():
+                        # if clicks close
+                        if event.type == pygame.QUIT:
+                            import sys
+                            pygame.quit()
+                            sys.exit()
+                        # each mouse click will be couted as a move
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            move = pygame.mouse.get_pos()[0]//self.blockSize
+                            try:
+                                self.move( move, player )
+                            except MoveNotValidError as e:
+                                print(e)
+                            else:
+                                self.drawGrid()
+                                move_ok=True
+                        # if makes mistake use keyboard to move undo last move
+                        elif event.type == pygame.KEYDOWN:
+                            self.move_back()
+                            move_ok=True
+                        
                 if self.check_lines():
-                    print(f'\nPlayer "{player}" wins!')
+                    self.win_screen(player)
                     return
+
+    def drawGrid(self):
+        Red = (200, 100, 100)
+        Blue = (0, 200, 200)
+
+        for x in range(self.shape[0]):
+            for y in range(self.shape[1]):
+                px = x*self.blockSize
+                py = y*self.blockSize
+                rect = pygame.Rect(px, py, self.blockSize, self.blockSize)
+                pygame.draw.rect(self.screen, self.BLACK, rect, 1)
+                # self.screen.blit(self.font.render(self.board[y][x], False, self.BLACK), (px+6, py+1))
+                
+                if self.board[y][x] == 'X':
+                    pygame.draw.circle(self.screen, Red, (px+self.blockSize//2,py+self.blockSize//2), self.blockSize//2)
+                if self.board[y][x] == 'O':
+                    pygame.draw.circle(self.screen, Blue, (px+self.blockSize//2,py+self.blockSize//2), self.blockSize//2)
+        pygame.display.update()
+
+    def win_screen(self, winner):
+        print(f'\nPlayer "{winner}" wins!')
+        pygame.init()
+        font = pygame.font.SysFont('Arial', 18)
+        pygame.display.set_caption('Box Test')
+        screen = pygame.display.set_mode( (self.shape[0]*self.blockSize, self.shape[1]*self.blockSize) )
+        screen.fill(self.WHITE)
+        if winner == 'X':
+            winner='Red'
+        else:
+            winner='Blue'
+        screen.blit(self.font.render(f'Player "{winner}" wins!', False, self.BLACK), (10, 10))
+        pygame.display.update()
+
+    def move_back(self):
+        try:
+            last_move = self.moves.pop(-1)
+        except IndexError:
+            pass
+        else:
+            # clear board
+            lx,ly=last_move
+            self.board[lx][ly]=''
+            self.init_screen()
+            self.drawGrid()
+
 
 class MoveNotValidError(Exception):
     def __init__(self, msg):
         self.message = msg
 
 if __name__ == '__main__':
-    game = FourInLine()
-    # print(game.board)
+    game = FourInLine(40)
     try:
         game.play()
-        print(game.board)
-
     except KeyboardInterrupt:
         print('\nYou have quit the game!')

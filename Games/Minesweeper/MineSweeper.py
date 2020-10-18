@@ -1,7 +1,11 @@
 import pygame
+import sys
+
 
 class MineSweeper:
     def __init__(self, board, n_mines):
+        sys.setrecursionlimit(board.shape[0]*board.shape[1])
+
         self.board = board
         self.mines = n_mines
         self.shape = board.shape
@@ -98,8 +102,8 @@ class MineSweeper:
 
 if __name__ == '__main__':
     from BoardBuilder import BoardBuilder
-    shape = (50,25)
-    MINES = 10
+    shape = (30,20)
+    MINES = 50
 
     board = BoardBuilder(shape=shape, n_mines=MINES)
     # print(board)
