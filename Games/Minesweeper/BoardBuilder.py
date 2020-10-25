@@ -1,3 +1,4 @@
+import numpy as np
 
 class Tile:
 	def __init__(self, value):
@@ -13,8 +14,6 @@ class Tile:
 
 class BoardBuilder:
 	def __init__(self, shape=(10,10), n_mines=10):
-		import numpy as np
-		
 		self.n_mines = n_mines
 		self.shape = shape
 		self.matrix = np.ndarray(shape=shape, dtype=Tile)

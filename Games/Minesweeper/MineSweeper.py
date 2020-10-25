@@ -80,7 +80,7 @@ class MineSweeper:
 	def drawGrid(self):
 		pygame.init()
 		self.font = pygame.font.SysFont('Arial', 18)
-		pygame.display.set_caption('Box Test')
+		pygame.display.set_caption('MineSweeper')
 		self.screen = pygame.display.set_mode((self.shape[0]*self.blockSize, self.shape[1]*self.blockSize))
 		self.screen.fill(self.WHITE)
 		pygame.display.update()
