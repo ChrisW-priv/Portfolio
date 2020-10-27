@@ -3,9 +3,9 @@ import pygame
 
 
 class Tile:
-	def __init__(self, player='', to_be_seen=True):
+	def __init__(self, player='', pos=(0,0)):
 		self.player = player
-		self.to_be_seen = to_be_seen
+		self.pos = pos
 	def __repr__(self):
 		return self.player
 
@@ -60,12 +60,14 @@ class String:
 		if None not in self.around:
 			return [pos.player for pos in self.around].count(self.colour)==0
 
+
 class Go:
 	def __init__(self, shape=(19,19), blockSize=40):
 		self.board = np.empty(shape=shape, dtype=Tile)
 		self.shape = shape
 		self.blockSize = blockSize
-		self.moves = []
+		self.moves_back = []
+		self.moves_forward = []
 
 		self.white_prisoners = 0
 		self.black_prisoners = 0
@@ -119,7 +121,7 @@ class Go:
 		self.passed = 0
 		# play until finished
 		while True:
-			for player in ['W','B']:
+			for player in ['B','W']:
 				move_ok=False
 				while not move_ok:
 					for event in pygame.event.get():
@@ -134,6 +136,9 @@ class Go:
 							x = move[0]//self.blockSize
 							y = move[1]//self.blockSize
 							move_ok = self.move( (x,y), player )
+							if move_ok:
+								self.passed=0
+								self.moves_forward=[]
 						
 						# if makes mistake use keyboard to move undo last move
 						elif event.type == pygame.KEYDOWN:
@@ -145,6 +150,9 @@ class Go:
 							if event.key == pygame.K_b:
 								self.move_back()
 								move_ok=True
+							if event.key == pygame.K_f:
+								self.move_forward()
+								move_ok=True
 								
 				if self.game_is_finished():
 					winner = self.decide_winner()
@@ -153,14 +161,50 @@ class Go:
 	def move(self, move, player):
 		def move_is_suicidal(x,y):
 			# jeżeli w tym ruchu powstaje string o kolorze obecnego gracza i nie powstaje żaden string gracza przeciwnego
-			self.board[x][y] = Tile(player)
+			self.board[x][y] = Tile(player, (x,y))
 			colours_of_strings = [string.colour for string in self.all_strings() if string.is_surrounded()]
 			self.board[x][y] = None
 			return len(colours_of_strings)>0 and len(colours_of_strings)==colours_of_strings.count(player)
 
 		def move_is_ok_with_KO_rule(x,y):
 			# if move does not lead to recapture of same tile (captured in last move)
-			return True
+			from copy import deepcopy
+			current_state = deepcopy(self.board) 
+			def move_back(moves_back):
+				try:
+					last = self.moves_back[-moves_back]
+				except IndexError:
+					pass
+				else:
+					if type(last) == String:
+						for pos in last.tiles:
+							x,y = pos
+							current_state[x][y] = Tile(last.colour, pos)
+						move_back(moves_back+1)
+					else:
+						current_state[last.pos[0]][last.pos[1]]=None
+
+			def matrix_equal(m1,m2):
+				ax,ay = np.where( m1 != m2 )
+				for x,y in zip( ax,ay ):
+					try:
+						a = m1[x][y].player
+						b = m2[x][y].player
+					except AttributeError:
+						a = m1[x][y]
+						b = m2[x][y]
+					finally:
+						if a==b:
+							continue
+						else:
+							return False
+				return True
+
+			if len(self.moves_back)>2:
+				move_back(1)
+				return not matrix_equal(current_state, self.board)
+			else:
+				return True
 
 		try:
 			# check if move is valid
@@ -176,9 +220,9 @@ class Go:
 			return False
 		else:
 			# update board
-			self.board[x][y] = Tile(player)
+			self.board[x][y] = Tile(player, move)
 			# update moves log
-			self.moves.append( move )
+			self.moves_back.append( Tile(player, move) )
 			# check if there has been any captures
 			for string in self.all_strings():
 				if string.colour!=player and string.is_surrounded():
@@ -192,19 +236,31 @@ class Go:
 
 	def move_back(self):
 		try:
-			last = self.moves.pop(-1)
+			last = self.moves_back.pop(-1)
 		except IndexError:
-			pass
+			print('There are no moves played before this position!')
 		else:
 			if type(last) == String:
 				for pos in last.tiles:
 					x,y = pos
-					self.board[x][y] = Tile(last.colour)
+					self.board[x][y] = Tile(last.colour, pos)
 				self.move_back()
-			else:
+			if type(last) == Tile:
 				# clear last added piece
-				lx,ly=last
+				self.moves_forward.append(last)
+				lx,ly=last.pos
 				self.board[lx][ly]=None
+			self.init_board()
+			self.drawGrid()
+
+	def move_forward(self):
+		try:
+			last = self.moves_forward.pop(-1)
+		except IndexError:
+			print('There are no moves played after this position!')
+		else:
+			self.move(last.pos, last.player)
+
 			self.init_board()
 			self.drawGrid()
 
@@ -220,7 +276,7 @@ class Go:
 		return all_strings
 
 	def remove_string(self, string):
-		self.moves.append(string)
+		self.moves_back.append(string)
 		for pos in string.tiles:
 			x,y = pos
 			self.board[x][y] = None
