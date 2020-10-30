@@ -135,10 +135,14 @@ class Go:
 							move = pygame.mouse.get_pos()
 							x = move[0]//self.blockSize
 							y = move[1]//self.blockSize
-							move_ok = self.move( (x,y), player )
+							move_ok = self.move_valid( (x,y), player )
 							if move_ok:
-								self.passed=0
+								self.move( (x,y), player)
 								self.moves_forward=[]
+								self.passed=0
+								# finally display changes
+								self.drawGrid()
+
 						
 						# if makes mistake use keyboard to move undo last move
 						elif event.type == pygame.KEYDOWN:
@@ -158,7 +162,7 @@ class Go:
 					winner = self.decide_winner()
 					self.win_screen(winner)
 
-	def move(self, move, player):
+	def move_valid(self, move, player):
 		def move_is_suicidal(x,y):
 			# jeżeli w tym ruchu powstaje string o kolorze obecnego gracza i nie powstaje żaden string gracza przeciwnego
 			self.board[x][y] = Tile(player, (x,y))
@@ -169,21 +173,10 @@ class Go:
 		def move_is_ok_with_KO_rule(x,y):
 			# if move does not lead to recapture of same tile (captured in last move)
 			from copy import deepcopy
-			current_state = deepcopy(self.board) 
-			def move_back(moves_back):
-				try:
-					last = self.moves_back[-moves_back]
-				except IndexError:
-					pass
-				else:
-					if type(last) == String:
-						for pos in last.tiles:
-							x,y = pos
-							current_state[x][y] = Tile(last.colour, pos)
-						move_back(moves_back+1)
-					else:
-						current_state[last.pos[0]][last.pos[1]]=None
-
+			current_state = deepcopy(self.board)
+			moves_back_c = deepcopy(self.moves_back)
+			self.move(move, player)
+			
 			def matrix_equal(m1,m2):
 				ax,ay = np.where( m1 != m2 )
 				for x,y in zip( ax,ay ):
@@ -200,16 +193,22 @@ class Go:
 							return False
 				return True
 
-			if len(self.moves_back)>2:
-				move_back(1)
-				return not matrix_equal(current_state, self.board)
+			for _ in range(2):
+				if len(self.moves_back)>2:
+					self.move_back()
+			if matrix_equal(current_state, self.board):
+				self.board = current_state
+				self.moves_back = moves_back_c
+				return False
 			else:
+				self.board = current_state
+				self.moves_back = moves_back_c
 				return True
 
 		try:
 			# check if move is valid
 			x,y = move
-			if self.board[x][y] != None:
+			if not self.board[x][y] == None:
 				raise MoveNotValidError('This position is already taken')
 			if move_is_suicidal(x,y):
 				raise MoveNotValidError('This move is suicidal')
@@ -219,20 +218,21 @@ class Go:
 			print('Move not valid!', e)
 			return False
 		else:
-			# update board
-			self.board[x][y] = Tile(player, move)
-			# update moves log
-			self.moves_back.append( Tile(player, move) )
-			# check if there has been any captures
-			for string in self.all_strings():
-				if string.colour!=player and string.is_surrounded():
-					self.update_prisoners(string.colour, len(string.tiles))
-					self.remove_string(string)
-					self.init_board()
-
-			# finally display changes
-			self.drawGrid()
 			return True
+
+	def move(self, move, player):
+		x,y = move
+
+		# update board
+		self.board[x][y] = Tile(player, move)
+		# update moves log
+		self.moves_back.append( Tile(player, move) )
+		# check if there has been any captures
+		for string in self.all_strings():
+			if string.colour!=player and string.is_surrounded():
+				self.update_prisoners(string.colour, len(string.tiles))
+				self.remove_string(string)
+				self.init_board()
 
 	def move_back(self):
 		try:
@@ -263,6 +263,24 @@ class Go:
 
 			self.init_board()
 			self.drawGrid()
+
+	def drawing_mode(self):
+		self.init_board()
+		while True:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					self.quit()
+				if event.type == pygame.MOUSEBUTTONDOWN:
+					# get position of mouse and devide it by blocksize to match self.size constrains
+					move = pygame.mouse.get_pos()
+					x = move[0]//self.blockSize
+					y = move[1]//self.blockSize
+					pl={1:'B', 3:"W"}
+					if event.button in [1, 3]:
+						self.move( (x,y), pl[event.button])
+						self.moves_forward=[]
+						# finally display changes
+						self.drawGrid()
 
 	def all_strings(self):
 		all_strings=[]
@@ -335,6 +353,6 @@ class MoveNotValidError(Exception):
 if __name__ == '__main__':
 	game = Go(shape=(9,9), blockSize=40)
 	try:
-		game.play()
+		game.drawing_mode()
 	except KeyboardInterrupt:
 		print('\nYou have quit the game!')
