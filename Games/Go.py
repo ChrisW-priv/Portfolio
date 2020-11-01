@@ -68,7 +68,6 @@ class Go:
 		self.blockSize = blockSize
 		self.moves_back = []
 		self.moves_forward = []
-
 		self.white_prisoners = 0
 		self.black_prisoners = 0
 
@@ -77,13 +76,11 @@ class Go:
 		GRAY = (100,100,100)
 		self.BLACK = (0, 0, 0)
 		self.WHITE = (200, 200, 200)
-		
 		# pygame board init
 		pygame.init()
 		pygame.display.set_caption('GO')
 		self.screen = pygame.display.set_mode( (self.shape[0]*self.blockSize, self.shape[1]*self.blockSize) )
 		self.screen.fill(GRAY)
-		
 		# draw grid of lines
 		for x in range(self.shape[0]+1):
 			for y in range(self.shape[1]+1):
@@ -91,7 +88,6 @@ class Go:
 				py = y*self.blockSize-(self.blockSize//2)
 				rect = pygame.Rect(px, py, self.blockSize, self.blockSize)
 				pygame.draw.rect(self.screen, self.BLACK, rect, 1)
-
 		pygame.display.update()
 
 	def drawGrid(self):		
@@ -135,14 +131,11 @@ class Go:
 							move = pygame.mouse.get_pos()
 							x = move[0]//self.blockSize
 							y = move[1]//self.blockSize
-							move_ok = self.move_valid( (x,y), player )
+							move_ok = self.move( (x,y), player )
 							if move_ok:
-								self.move( (x,y), player)
-								self.moves_forward=[]
-								self.passed=0
-								# finally display changes
 								self.drawGrid()
-
+								self.passed=0
+								self.moves_forward=[]
 						
 						# if makes mistake use keyboard to move undo last move
 						elif event.type == pygame.KEYDOWN:
@@ -162,7 +155,7 @@ class Go:
 					winner = self.decide_winner()
 					self.win_screen(winner)
 
-	def move_valid(self, move, player):
+	def move(self, move, player):
 		def move_is_suicidal(x,y):
 			# jeżeli w tym ruchu powstaje string o kolorze obecnego gracza i nie powstaje żaden string gracza przeciwnego
 			self.board[x][y] = Tile(player, (x,y))
@@ -172,10 +165,7 @@ class Go:
 
 		def move_is_ok_with_KO_rule(x,y):
 			# if move does not lead to recapture of same tile (captured in last move)
-			from copy import deepcopy
-			current_state = deepcopy(self.board)
-			moves_back_c = deepcopy(self.moves_back)
-			self.move(move, player)
+			from copy import copy
 			
 			def matrix_equal(m1,m2):
 				ax,ay = np.where( m1 != m2 )
@@ -193,22 +183,23 @@ class Go:
 							return False
 				return True
 
-			for _ in range(2):
-				if len(self.moves_back)>2:
+			if len(self.moves_back)>1:
+				self.move_back()
+				state_one_move_before = copy(self.board)
+				self.move_forward()
+				self.palce_stone((x,y), player)
+				if not matrix_equal(state_one_move_before, self.board):
+					return True
+				else:
 					self.move_back()
-			if matrix_equal(current_state, self.board):
-				self.board = current_state
-				self.moves_back = moves_back_c
-				return False
 			else:
-				self.board = current_state
-				self.moves_back = moves_back_c
+				self.palce_stone((x,y), player)
 				return True
 
 		try:
 			# check if move is valid
 			x,y = move
-			if not self.board[x][y] == None:
+			if self.board[x][y] != None:
 				raise MoveNotValidError('This position is already taken')
 			if move_is_suicidal(x,y):
 				raise MoveNotValidError('This move is suicidal')
@@ -220,9 +211,8 @@ class Go:
 		else:
 			return True
 
-	def move(self, move, player):
+	def palce_stone(self, move, player):
 		x,y = move
-
 		# update board
 		self.board[x][y] = Tile(player, move)
 		# update moves log
@@ -259,10 +249,29 @@ class Go:
 		except IndexError:
 			print('There are no moves played after this position!')
 		else:
-			self.move(last.pos, last.player)
+			self.palce_stone(last.pos, last.player)
 
 			self.init_board()
 			self.drawGrid()
+
+	def all_strings(self):
+		all_strings=[]
+		for x in range(self.shape[0]):
+			for y in range(self.shape[1]):
+				pos = (x,y)
+				if self.board[x][y] != None:
+					if pos not in [position_seen for string in all_strings for position_seen in string.tiles]:
+						string=String(self.board, pos, self.board[x][y].player)
+						all_strings.append(string)
+				else:
+					string = String(self.board, pos, None)
+		return all_strings
+
+	def remove_string(self, string):
+		self.moves_back.append(string)
+		for pos in string.tiles:
+			x,y = pos
+			self.board[x][y] = None
 
 	def drawing_mode(self):
 		self.init_board()
@@ -277,27 +286,16 @@ class Go:
 					y = move[1]//self.blockSize
 					pl={1:'B', 3:"W"}
 					if event.button in [1, 3]:
-						self.move( (x,y), pl[event.button])
+						self.palce_stone( (x,y), pl[event.button])
 						self.moves_forward=[]
 						# finally display changes
 						self.drawGrid()
-
-	def all_strings(self):
-		all_strings=[]
-		for x in range(self.shape[0]):
-			for y in range(self.shape[1]):
-				if self.board[x][y] != None:
-					pos = (x,y)
-					if pos not in [position_seen for string in all_strings for position_seen in string.tiles]:
-						string=String(self.board, pos, self.board[x][y].player)
-						all_strings.append(string)
-		return all_strings
-
-	def remove_string(self, string):
-		self.moves_back.append(string)
-		for pos in string.tiles:
-			x,y = pos
-			self.board[x][y] = None
+				elif event.type == pygame.KEYDOWN:
+					# move back
+					if event.key == pygame.K_b:
+						self.move_back()
+					if event.key == pygame.K_f:
+						self.move_forward()
 
 	def update_prisoners(self, player, prisoners_count):
 		teritories = {'W':0,'B':0}
@@ -316,12 +314,21 @@ class Go:
 		return True
 
 	def decide_winner(self):
-		teritories = {'White':0,'Black':0}
-		# for each position check if it is teritory of black or white
-		# to be finished
-		# count scores of both players
-		self.white_score = self.white_prisoners + teritories['White']
-		self.black_score = self.black_prisoners + teritories['Black']
+		teritories = {'W':0,'B':0}
+		for x in range(self.shape[0]):
+			for y in range(self.shape[1]):
+				try:
+					player = self.board[x][y].player
+				except AttributeError:
+					continue
+				else:
+					teritories[player] += 1
+		for string in self.all_strings():
+			if string.colour==None and string.is_surrounded():
+				teritories[string.around[0].player] += 1
+
+		self.white_score = self.white_prisoners + teritories['W'];print(self.white_score)
+		self.black_score = self.black_prisoners + teritories['B'];print(self.black_score)
 
 		# return results
 		if self.white_score > self.black_score:
@@ -353,6 +360,6 @@ class MoveNotValidError(Exception):
 if __name__ == '__main__':
 	game = Go(shape=(9,9), blockSize=40)
 	try:
-		game.drawing_mode()
+		game.play()
 	except KeyboardInterrupt:
 		print('\nYou have quit the game!')
