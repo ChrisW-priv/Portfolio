@@ -1,49 +1,60 @@
-class Tile():
-	def __init__(self, value=None):
-		self.value = value
+class Tile:
+	def __init__(self):
+		self.value = None
 		self.lvl = 0
 		self.next = []
 
 
-first_tile = Tile()
-tiles_to_do = [first_tile]
+class MinMaxTree:
+	def __init__(self, first_tile = Tile()):
+		self.first_tile = first_tile
+		self.tiles_to_do = [first_tile]
 
-MAX_LVL = 2
-BRANCHES = 3
-values_on_the_end = ( range(1, BRANCHES**MAX_LVL+1) );i=0
+		self.MAX_LVL = 4
+		self.BRANCHES = 4
+		self.values_on_the_end = ( range(1, self.BRANCHES**self.MAX_LVL+1) ); self.i=0
+		self.create_tree()
+		self.go_down()
 
-# create tree
-current_lvl = 0
-while tiles_to_do:
-	top = tiles_to_do.pop(0)
-	current_lvl = top.lvl+1
-	for _ in range(BRANCHES):
-		if current_lvl == MAX_LVL:
-			new_tile = Tile(values_on_the_end[i])
-			new_tile.lvl = current_lvl
-			top.next.append(new_tile)
-			i+=1
+	def create_tree(self):
+		while self.tiles_to_do:
+			top = self.tiles_to_do.pop(0)
+			current_lvl = top.lvl+1
+			for _ in range(self.BRANCHES):
+				new_tile = Tile()
+				new_tile.lvl = current_lvl
+				top.next.append(new_tile)
+				if current_lvl == self.MAX_LVL:
+					new_tile.value = self.values_on_the_end[self.i]; self.i+=1
+				if current_lvl<self.MAX_LVL:
+					self.tiles_to_do.append(new_tile)
+
+	def go_down(self):
+		for _ in range(self.MAX_LVL):
+			self.update_from_the_bottom(self.first_tile)
+
+	def update_from_the_bottom(self, tile):
+		values_next = [tile.value for tile in tile.next]
+		if not tile.value and None not in values_next:
+			if tile.lvl%2==0:
+				tile.value = max(values_next)
+			else:
+				tile.value = min(values_next)
 		else:
-			new_tile = Tile()
-			new_tile.lvl = current_lvl
-			top.next.append(new_tile)
-			tiles_to_do.append(new_tile)
+			for next_tile in tile.next:
+				self.update_from_the_bottom(next_tile)
 
-# update values from bottop to top
-def go_down(tile):
-	values_next = [tile.value for tile in tile.next]
-	if tile.value == None and None not in values_next:
-		if tile.lvl%2==0:
-			tile.value = max(values_next)
+	def values_on_the_bottom(self, tile=None):
+		if not tile:
+			tile = self.first_tile
+		if tile.value:
+			return tile.value
 		else:
-			tile.value = min(values_next)
-	else:
-		for next_tile in tile.next:
-			go_down(next_tile)
+			for next_tile in tile.next:
+				self.values_on_the_bottom(next_tile)
 
-# update tree state until it reaches the top
-while first_tile.value == None: 
-	go_down(first_tile)
 
-# print value for perfect game
-print(first_tile.value)
+if __name__ == "__main__":
+	tree = MinMaxTree()
+	# print value for perfect game
+	print(tree.values_on_the_bottom())

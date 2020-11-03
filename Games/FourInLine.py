@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import pygame
 
@@ -6,6 +5,7 @@ import pygame
 class FourInLine:
 	def __init__(self, size=20):
 		self.board = np.empty(shape=(6,7), dtype=str)
+		self.highest=[0,0,0,0,0,0,0]
 		self.moves=[]
 
 		self.shape = self.board.shape[::-1]
@@ -66,24 +66,20 @@ class FourInLine:
 
 	def quit(self):
 		from sys import exit
-		pygame.quit()
-		exit()
+		pygame.quit(); exit()
 
 	def move(self, move, player):
 		try:
-			highest = self.highest()
-
-			if highest[move] == self.board.shape[0]:
+			if self.highest[move] == 6:
 				raise MoveNotValidError('This column is full, choose other one\n')
-			else:
-				x=self.board.shape[0]-highest[move]-1
-				y=move
-				self.board[x][y] = player
-				self.moves.append( (x,y) )
 		except MoveNotValidError as e:
 			print(e)
-			return False
 		else:
+			x = self.board.shape[0] - self.highest[move] - 1
+			self.board[x][move] = player
+			self.highest[move] += 1
+			self.moves.append((x, move))
+
 			self.drawGrid()
 			return True
 		
@@ -119,16 +115,6 @@ class FourInLine:
 
 		return True in lines
 
-	def highest(self):
-		highest = []
-		for column in range(len( self.board[0] )):
-			for row in range( len(self.board) ):
-				if self.board[len( self.board )-row-1][column] == "":
-					highest.append(row);break
-				if row == 5:
-					highest.append(row+1);break
-		return highest
-
 	def win_screen(self, winner):
 		print(f'\nPlayer "{winner}" wins!')
 		pygame.init()
@@ -147,6 +133,7 @@ class FourInLine:
 class MoveNotValidError(Exception):
 	def __init__(self, msg):
 		self.message = msg
+
 
 if __name__ == '__main__':
 	game = FourInLine(40)
