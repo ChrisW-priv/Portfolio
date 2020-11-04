@@ -13,20 +13,24 @@ class FourInLine:
 		self.lvl = 0
 
 	def __repr__(self):
-		str_grid = "1   2   3   4   5   6   7 \n-   -   -   -   -   -   -\n"
+		str_grid = "1   2   3   4   5   6   7\n-   -   -   -   -   -   -\n"
 		for y in range(6):
-			if y % 1 == 0 and y != 0:
+			if y != 0:
 				str_grid += ("- - - - - - - - - - - - -\n")
 			for x in range(7):
+				position = self.board[x][5-y]
 				if x % 1 == 0 and x != 0:
 					str_grid += (" | ")
-				if self.board[x][y] == '':
+				if position == '':
 					str_grid += ' '
 				if x == 6:
-					str_grid += str((self.board[x][y])) + '\n'
+					str_grid += position + '\n'
 				else:
-					str_grid += (str(self.board[x][y]) + "")
+					str_grid += position
 		return str_grid
+
+	def demo(self):
+		return f"{self.lvl}\n{self.highest}\n{self.value}\n{self}"
 
 	def there_is_a_winner(self):
 		if sum(self.highest) >= 7:
@@ -57,36 +61,41 @@ class FourInLine:
 
 	def possible_moves(self, player):
 		moves = []
-		if self.find_direct_win(player):
+		if self.found_direct_win(player):
 			self.value = 1
-			moves.append(self.find_direct_win(player))
+			moves.append(self.found_direct_win(player))
 		else:
-			for i, highest in enumerate(self.highest):
-				if highest != 6 and i not in self.move_leading_to_direct_loss(player):
-					moves.append(i)
+			for move, highest in enumerate(self.highest):
+				if highest < 5 and not self.move_leading_to_direct_loss(move, player):
+					moves.append(move)
 		return moves
 
-	def find_direct_win(self, player):
-		for i, highest in enumerate(self.highest):
-			if highest != 6:
-				self.move(i, player)
+	def found_direct_win(self, player):
+		for move, highest in enumerate(self.highest):
+			if highest < 5:
+				self.move(move, player)
 				if self.there_is_a_winner():
-					return i
-				else:
-					self.move_back()
+					return move
+				self.move_back()
 
-	def move_leading_to_direct_loss(self, player):
-		# check if oponent has a direct win if we do not prevent it
-		return []
+	def move_leading_to_direct_loss(self, move, player):
+		# check if opponent has a direct win if we do not prevent it
+		players = ['W', 'B']
+		opponent = players[players.index(player)-1]
+		self.move(move, player)
+		if_found = self.found_direct_win(opponent)
+		self.move_back( (move, self.highest[move]-1) )
+		return if_found
 
 	def move(self, move, player):
-		y = self.board.shape[1] - self.highest[move] - 1
-		self.board[move][y] = player
+		self.board[move][self.highest[move]] = player
+		self.last_move = (move, self.highest[move])
 		self.highest[move] += 1
-		self.last_move = (move, y)
 
-	def move_back(self):
-		x, y = self.last_move
+	def move_back(self, move=None):
+		if not move:
+			move = self.last_move
+		x, y = move
 		self.board[x][y] = ''
 		self.highest[x] -= 1
 
@@ -148,8 +157,7 @@ class FourInLineTreeMinMaxEvaluation:
 	def print_all_positions(self, game_state=None):
 		if not game_state:
 			game_state = self.first_state
-		print(game_state.lvl)
-		print(game_state)
+		print(game_state.demo())
 		for next_state in game_state.next:
 			self.print_all_positions(next_state)
 
@@ -166,9 +174,10 @@ class FourInLineTreeMinMaxEvaluation:
 if __name__ == "__main__":
 	import sys
 
-	DEPTH = 3
+	DEPTH = 2
 	sys.setrecursionlimit(min(10000, 7 ** DEPTH))
 
 	tree_search = FourInLineTreeMinMaxEvaluation(DEPTH)
 	# tree_search.print_all_positions()
 	tree_search.board_on_the_bottom()
+	# print(tree_search.first_state.value)
