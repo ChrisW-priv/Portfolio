@@ -1,0 +1,34 @@
+def possible_moves(self, player):
+    moves = []
+    self.is_symmetric = np.all(self.board == self.board[::-1])
+    if self.is_symmetric:
+        nonsense_moves = [4, 5, 6]
+    else:
+        nonsense_moves = []
+    if self.found_direct_win(player):
+        self.value = 1
+        moves.append(self.found_direct_win(player))
+    else:
+        for move in range(7):
+            if self.highest[move] < 6 and move not in nonsense_moves \
+                    and not self.move_leading_to_direct_loss(move, player):
+                moves.append(move)
+    return moves
+
+
+__repr__:
+return f"{self.lvl}\n{self.highest}\n{self.value}\n{self.is_symmetric}\n{str_grid}"
+
+
+self.highest = [6-np.unique(v, return_counts=True)[1][0] for v in board]
+self.lvl = sum(self.highest)
+*do not need self.last_move*
+
+def move_back(self, move):
+    self.highest[move] -= 1
+    self.board[move][self.highest[move]] = ''
+
+def move(self, move, player):
+    self.board[move][self.highest[move]] = player
+    self.highest[move] += 1
+
