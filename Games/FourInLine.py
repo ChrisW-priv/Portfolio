@@ -4,11 +4,11 @@ import pygame
 
 class FourInLine:
 	def __init__(self, size=20):
-		self.board = np.empty(shape=(6,7), dtype=str)
-		self.highest=[0,0,0,0,0,0,0]
-		self.moves=[]
+		self.board = np.empty(shape=(7,6), dtype=str)
+		self.highest = [0,0,0,0,0,0,0]
+		self.moves = []
 
-		self.shape = self.board.shape[::-1]
+		self.shape = self.board.shape
 		self.blockSize = size
 		self.BLACK = (0, 0, 0)
 		self.WHITE = (200, 200, 200)
@@ -25,17 +25,16 @@ class FourInLine:
 		Red = (200, 100, 100)
 		Blue = (0, 200, 200)
 
-		for x in range(self.shape[0]):
-			for y in range(self.shape[1]):
+		for x in range(7):
+			for y in range(6):
 				px = x*self.blockSize
 				py = y*self.blockSize
 				rect = pygame.Rect(px, py, self.blockSize, self.blockSize)
 				pygame.draw.rect(self.screen, self.BLACK, rect, 1)
-				# self.screen.blit(self.font.render(self.board[y][x], False, self.BLACK), (px+6, py+1))
 				
-				if self.board[y][x] == 'X':
+				if self.board[x][y] == 'X':
 					pygame.draw.circle(self.screen, Red, (px+self.blockSize//2,py+self.blockSize//2), self.blockSize//2)
-				if self.board[y][x] == 'O':
+				if self.board[x][y] == 'O':
 					pygame.draw.circle(self.screen, Blue, (px+self.blockSize//2,py+self.blockSize//2), self.blockSize//2)
 		pygame.display.update()
 
@@ -75,10 +74,10 @@ class FourInLine:
 		except MoveNotValidError as e:
 			print(e)
 		else:
-			x = self.board.shape[0] - self.highest[move] - 1
-			self.board[x][move] = player
+			y = self.board.shape[1] - self.highest[move] - 1
+			self.board[move][y] = player
 			self.highest[move] += 1
-			self.moves.append((x, move))
+			self.moves.append((move, y))
 
 			self.drawGrid()
 			return True
@@ -92,19 +91,24 @@ class FourInLine:
 			# clear board
 			lx,ly=last_move
 			self.board[lx][ly]=''
+			self.highest[lx]-=1
 			self.init_screen()
 			self.drawGrid()
 
 	def check_lines(self):
 		b = self.board # makes writing code bit more easies
 		# horisontal_line
-		horizontal_line = lambda row, column: True if (b[row][column]==b[row][column+1]==b[row][column+2]==b[row][column+3]!='') else False  
+		horizontal_line = lambda row, column: \
+			True if (b[row][column]==b[row][column+1]==b[row][column+2]==b[row][column+3]!='') else False
 		# vertical_line
-		vertical_line = lambda row, column: True if (b[row][column]==b[row+1][column]==b[row+2][column]==b[row+3][column]!='') else False
+		vertical_line = lambda row, column: \
+			True if (b[row][column]==b[row+1][column]==b[row+2][column]==b[row+3][column]!='') else False
 		# diagonal_line
-		diagonal_right_line = lambda row, column: True if (b[row][column]==b[row+1][column+1]==b[row+2][column+2]==b[row+3][column+3]!='') else False
+		diagonal_right_line = lambda row, column: \
+			True if (b[row][column]==b[row+1][column+1]==b[row+2][column+2]==b[row+3][column+3]!='') else False
 		# diagonal_line
-		diagonal_left_line = lambda row, column: True if (b[row][column]==b[row+1][column-1]==b[row+2][column-2]==b[row+3][column-3]!='') else False
+		diagonal_left_line = lambda row, column: \
+			True if (b[row][column]==b[row+1][column-1]==b[row+2][column-2]==b[row+3][column-3]!='') else False
 
 		horizontal_lines = [horizontal_line(row,col) for row in range(b.shape[0]) for col in range(b.shape[1]-3)]
 		vertical_lines = [vertical_line(row,col) for row in range(b.shape[0]-3) for col in range(b.shape[1])]
