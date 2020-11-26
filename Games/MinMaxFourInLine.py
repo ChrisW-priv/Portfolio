@@ -128,8 +128,9 @@ class FourInLineTreeMinMaxEvaluation:
 			with ThreadPoolExecutor() as executor:
 				return executor.map(create_new_node, top_node.possible_moves())
 
-		for new_node in create_new_nodes(node):
-			self.nodes_to_do.append(new_node)
+		if node.lvl < self.MAX_LVL:
+			for new_node in create_new_nodes(node):
+				self.nodes_to_do.append(new_node)
 
 	def print_positions(self, game_state=None, all_=False):
 		if not game_state:
