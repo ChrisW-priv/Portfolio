@@ -1,14 +1,13 @@
-import random
-
-heads = 0; tails = 0
+from random import random
 
 times = int(input(" > How many tosses? "))
-for i in range(times):
-    n = random.randint(0, 1)
-    if n == 1:
-        heads += 1
-    else:
-        tails += 1
 
-print("num of times heads occured: " + str(heads))
-print("num of times tails occured: " + str(tails))
+heads = 0
+for _ in range(times):
+    heads += 1*(random()>0.5)
+
+print("number of times heads occured: " + str(heads))
+print(f"number of times tails occured: {times-heads}")
+
+deviation = (abs(times/2-heads) / times * 100)*2
+print(f'deviation: {round(deviation, 3)}%')

@@ -23,7 +23,7 @@ class TicTacToe:
         return str_grid
 
     def check_lines(self):
-        for line in [[0,1,2,],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]:
+        for line in [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]:
             if self.matrix[line[0]]== self.matrix[line[1]]== self.matrix[line[2]]!='':
                 return True
     
